@@ -281,6 +281,9 @@
 </div>
 
 <div id="optionsBar">
+  <div class="opt-group">
+    <input type="color" id="color" value="#ff0000" title="色">
+  </div>
   <div class="opt-group" id="optLine">
     <select id="lineStyle" title="線種">
       <option value="solid">実線</option>
@@ -294,9 +297,9 @@
     <span class="opt-label">字大</span>
     <input type="range" id="fontSize" min="16" max="200" value="28" title="文字サイズ">
     <span id="fontSizeVal" style="font-size:12px;min-width:30px;">28</span>
-    <label class="chk"><input type="checkbox" id="fontBold">太字</label>
+    <label class="chk"><input type="checkbox" id="fontBold">太</label>
     <select id="fontOutline" title="文字のふち取り">
-      <option value="none">ふちなし</option>
+      <option value="none">ふち無</option>
       <option value="white">白ふち</option>
       <option value="black">黒ふち</option>
     </select>
@@ -310,9 +313,6 @@
       <option value='"Times New Roman", serif'>Times New Roman</option>
       <option value='"Courier New", monospace'>Courier New</option>
     </select>
-  </div>
-  <div class="opt-group">
-    <input type="color" id="color" value="#ff0000" title="色">
   </div>
   <div class="opt-group">
     <button class="hbtn" id="btnClear" style="font-size:12px;">全消去</button>
