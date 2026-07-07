@@ -253,7 +253,6 @@
       <path d="M6 19 L24 7 v6 h34 v12 h-34 v6 z" fill="#fff"/>
       <text x="32" y="56" font-family="Arial, sans-serif" font-size="21" font-weight="bold" fill="#fff" text-anchor="middle">KORE</text>
     </svg>
-    ←KORE
   </span>
   <button class="hbtn primary" id="btnOpen" title="画像を開く">📂</button>
   <input type="file" id="fileInput" accept="image/*" hidden>
@@ -292,6 +291,15 @@
     <span id="lineWidthVal" style="font-size:12px;min-width:26px;">4</span>
   </div>
   <div class="opt-group hidden" id="optText">
+    <span class="opt-label">字大</span>
+    <input type="range" id="fontSize" min="16" max="200" value="28" title="文字サイズ">
+    <span id="fontSizeVal" style="font-size:12px;min-width:30px;">28</span>
+    <label class="chk"><input type="checkbox" id="fontBold">太字</label>
+    <select id="fontOutline" title="文字のふち取り">
+      <option value="none">ふちなし</option>
+      <option value="white">白ふち</option>
+      <option value="black">黒ふち</option>
+    </select>
     <select id="fontFamily" title="フォント">
       <option value='"Meiryo", sans-serif'>メイリオ</option>
       <option value='"Yu Gothic", "YuGothic", sans-serif'>游ゴシック</option>
@@ -301,15 +309,6 @@
       <option value='Arial, sans-serif'>Arial</option>
       <option value='"Times New Roman", serif'>Times New Roman</option>
       <option value='"Courier New", monospace'>Courier New</option>
-    </select>
-    <span class="opt-label">字大</span>
-    <input type="range" id="fontSize" min="16" max="200" value="28" title="文字サイズ">
-    <span id="fontSizeVal" style="font-size:12px;min-width:30px;">28</span>
-    <label class="chk"><input type="checkbox" id="fontBold">太字</label>
-    <select id="fontOutline" title="文字のふち取り">
-      <option value="none">ふちなし</option>
-      <option value="white">白ふち</option>
-      <option value="black">黒ふち</option>
     </select>
   </div>
   <div class="opt-group">
