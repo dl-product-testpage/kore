@@ -1,4 +1,4 @@
-const CACHE='kore-v3';
+const CACHE='kore-v4';
 const ASSETS=['./','./←KORE.html','./manifest.json','./icon-192.png','./icon-512.png'];
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)).then(() => self.skipWaiting()));

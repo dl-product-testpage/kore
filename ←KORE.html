@@ -302,7 +302,9 @@
       <option value='"Times New Roman", serif'>Times New Roman</option>
       <option value='"Courier New", monospace'>Courier New</option>
     </select>
-    <input type="number" id="fontSize" min="8" max="200" value="28" title="文字サイズ(px)">
+    <span class="opt-label">字大</span>
+    <input type="range" id="fontSize" min="8" max="200" value="28" title="文字サイズ">
+    <span id="fontSizeVal" style="font-size:12px;min-width:30px;">28</span>
     <label class="chk"><input type="checkbox" id="fontBold">太字</label>
     <select id="fontOutline" title="文字のふち取り">
       <option value="none">ふちなし</option>
@@ -369,6 +371,9 @@
   document.getElementById("lineWidth").addEventListener("input", function () {
     document.getElementById("lineWidthVal").textContent = this.value;
     applyStyleToSelection();
+  });
+  document.getElementById("fontSize").addEventListener("input", function () {
+    document.getElementById("fontSizeVal").textContent = this.value;
   });
   ["lineStyle", "color", "fontFamily", "fontSize", "fontBold", "fontOutline"].forEach(function (id) {
     var el = document.getElementById(id);
@@ -440,6 +445,7 @@
     var fs = document.getElementById("fontSize");
     fs.max = Math.max(300, Math.round(base / 3));
     fs.value = Math.max(28, Math.round(base / 18));
+    document.getElementById("fontSizeVal").textContent = fs.value;
   }
 
   document.getElementById("btnOpen").onclick = function () { fileInput.click(); };
@@ -765,6 +771,7 @@
     if (a) {
       document.getElementById("color").value = a.color;
       document.getElementById("fontSize").value = a.size;
+      document.getElementById("fontSizeVal").textContent = a.size;
       document.getElementById("fontFamily").value = a.font;
       document.getElementById("fontBold").checked = !!a.bold;
       document.getElementById("fontOutline").value = a.outline || "none";
