@@ -994,6 +994,11 @@
     commitTextInput();
     var newW = Math.max(1, Math.round(canvas.width / 2));
     var newH = Math.max(1, Math.round(canvas.height / 2));
+    var msg = "画像を50%に縮小します。\n\n" +
+              "現在のサイズ： " + canvas.width + " × " + canvas.height + " px\n" +
+              "縮小後のサイズ： " + newW + " × " + newH + " px\n\n" +
+              "この操作は戻せません。\n実行しますか？";
+    if (!window.confirm(msg)) return;
     var full = document.createElement("canvas");
     full.width = canvas.width; full.height = canvas.height;
     var fc = full.getContext("2d");
