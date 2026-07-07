@@ -1,0 +1,1052 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>←KORE</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%23e11d48'/%3E%3Cpath d='M6 19 L24 7 v6 h34 v12 h-34 v6 z' fill='%23fff'/%3E%3Ctext x='32' y='56' font-family='Arial, sans-serif' font-size='21' font-weight='bold' fill='%23fff' text-anchor='middle'%3EKORE%3C/text%3E%3C/svg%3E">
+<style>
+  :root {
+    --bg: #f4f5f7;
+    --panel: #ffffff;
+    --border: #d9dce1;
+    --accent: #2563eb;
+    --brand: #e11d48;
+    --text: #1f2937;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    font-family: "Segoe UI", "Meiryo", "Hiragino Kaku Gothic ProN", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    height: 100dvh; /* モバイルのアドレスバー対策 */
+    overflow: hidden;
+  }
+
+  /* ---------- 上部バー ---------- */
+  header {
+    background: var(--panel);
+    border-bottom: 1px solid var(--border);
+    padding: 6px 8px;
+    padding-top: calc(6px + env(safe-area-inset-top));
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    flex-shrink: 0;
+    overflow-x: auto;
+  }
+  header .brand {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-weight: 700;
+    font-size: 14px;
+    color: var(--brand);
+    flex-shrink: 0;
+    margin-right: 2px;
+  }
+  .hbtn {
+    min-width: 42px;
+    height: 40px;
+    font-size: 15px;
+    padding: 0 8px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: #fff;
+    color: var(--text);
+    flex-shrink: 0;
+    font-family: inherit;
+  }
+  .hbtn.primary {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+    font-weight: 600;
+  }
+  .hbtn:active { background: #e5edff; }
+  .hbtn.primary:active { background: #1d4ed8; }
+  .spacer { flex: 1; }
+
+  /* ---------- キャンバス ---------- */
+  #stage {
+    flex: 1;
+    overflow: auto;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 10px;
+    position: relative;
+  }
+  #canvasWrap {
+    position: relative;
+    box-shadow: 0 2px 10px rgba(0,0,0,.15);
+    display: none;
+  }
+  #canvas {
+    display: block;
+    max-width: 100%;
+    height: auto;
+    background: #fff;
+    touch-action: none; /* 描画中のスクロールを防ぐ */
+  }
+  #dropHint {
+    margin: auto;
+    text-align: center;
+    color: #6b7280;
+    border: 2px dashed #c3c8d1;
+    border-radius: 14px;
+    padding: 40px 24px;
+    background: #fafbfc;
+    max-width: 320px;
+  }
+  #dropHint h2 { margin: 0 0 8px; font-size: 17px; color: #374151; }
+  #dropHint p { margin: 4px 0; font-size: 12px; }
+  #dropHint button {
+    margin-top: 14px;
+    font-size: 16px;
+    padding: 12px 28px;
+    border: none;
+    border-radius: 10px;
+    background: var(--accent);
+    color: #fff;
+    font-weight: 600;
+    font-family: inherit;
+  }
+
+  /* ---------- テキスト入力 ---------- */
+  #textBox {
+    position: absolute;
+    display: none;
+    z-index: 10;
+  }
+  #textGrip {
+    position: absolute;
+    left: -34px;
+    top: -4px;
+    width: 30px;
+    height: 30px;
+    line-height: 30px;
+    text-align: center;
+    font-size: 15px;
+    background: var(--accent);
+    color: #fff;
+    border-radius: 7px;
+    cursor: move;
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: none;
+    box-shadow: 0 1px 4px rgba(0,0,0,.3);
+  }
+  #textInput {
+    border: 1px dashed var(--accent);
+    background: rgba(255,255,255,.85);
+    outline: none;
+    padding: 2px 4px;
+    min-width: 130px;
+    border-radius: 3px;
+    display: block;
+    font-family: inherit;
+  }
+
+  /* ---------- 下部：設定バー ---------- */
+  #optionsBar {
+    background: var(--panel);
+    border-top: 1px solid var(--border);
+    padding: 6px 8px;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    overflow-x: auto;
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+  .opt-group { display: flex; gap: 6px; align-items: center; flex-shrink: 0; }
+  .opt-group.hidden { display: none; }
+  .opt-label { font-size: 10px; color: #6b7280; flex-shrink: 0; }
+  #optionsBar select, #optionsBar input[type="number"] {
+    height: 38px;
+    font-size: 14px;
+    padding: 0 6px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: #fff;
+    color: var(--text);
+    font-family: inherit;
+  }
+  #optionsBar input[type="number"] { width: 58px; }
+  #optionsBar input[type="range"] { width: 80px; }
+  #optionsBar input[type="color"] {
+    width: 40px;
+    height: 38px;
+    padding: 2px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: #fff;
+  }
+  .chk {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    font-size: 13px;
+    height: 38px;
+    padding: 0 8px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: #fff;
+    user-select: none;
+  }
+  .chk input { width: 17px; height: 17px; }
+
+  /* ---------- 下部：ツールバー ---------- */
+  #toolbar {
+    background: var(--panel);
+    border-top: 1px solid var(--border);
+    display: flex;
+    flex-shrink: 0;
+    padding: 4px 4px;
+    padding-bottom: calc(4px + env(safe-area-inset-bottom));
+    gap: 4px;
+  }
+  #toolbar button {
+    flex: 1;
+    min-width: 0;
+    height: 52px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: #fff;
+    color: var(--text);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1px;
+    font-family: inherit;
+    padding: 0;
+  }
+  #toolbar button .ic { font-size: 18px; line-height: 1.1; }
+  #toolbar button .lb { font-size: 10px; }
+  #toolbar button.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+  }
+</style>
+<link rel="manifest" href="./manifest.json">
+<meta name="theme-color" content="#e11d48">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="←KORE">
+<link rel="apple-touch-icon" href="icon-192.png">
+</head>
+<body>
+
+<header>
+  <span class="brand" title="←KORE：画像注釈ツール">
+    <svg width="24" height="24" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+      <rect width="64" height="64" rx="12" fill="#e11d48"/>
+      <path d="M6 19 L24 7 v6 h34 v12 h-34 v6 z" fill="#fff"/>
+      <text x="32" y="56" font-family="Arial, sans-serif" font-size="21" font-weight="bold" fill="#fff" text-anchor="middle">KORE</text>
+    </svg>
+    ←KORE
+  </span>
+  <button class="hbtn primary" id="btnOpen" title="画像を開く">📂</button>
+  <input type="file" id="fileInput" accept="image/*" hidden>
+  <button class="hbtn" id="btnUndo" title="元に戻す">↩</button>
+  <button class="hbtn" id="btnRedo" title="やり直す">↪</button>
+  <button class="hbtn" id="btnDelete" title="選択中のものを削除">🗑</button>
+  <span class="spacer"></span>
+  <button class="hbtn primary" id="btnSaveJpg" title="JPEGで保存">💾JPG</button>
+  <button class="hbtn" id="btnSavePng" title="PNGで保存">PNG</button>
+  <button class="hbtn" id="btnShrink" title="画像と注釈を確定して50%に縮小（もう一度押すとさらに半分）">🔍50%</button>
+</header>
+
+<div id="stage">
+  <div id="dropHint">
+    <h2>画像を選んでスタート</h2>
+    <p>矢印・線・図形・文字で画像に注釈をつけられます</p>
+    <button id="btnOpen2">📂 画像を選ぶ</button>
+  </div>
+  <div id="canvasWrap">
+    <canvas id="canvas"></canvas>
+    <div id="textBox">
+      <div id="textGrip" title="ドラッグで移動">✥</div>
+      <input type="text" id="textInput" placeholder="文字を入力">
+    </div>
+  </div>
+</div>
+
+<div id="optionsBar">
+  <div class="opt-group" id="optLine">
+    <select id="lineStyle" title="線種">
+      <option value="solid">実線</option>
+      <option value="dashed">点線</option>
+    </select>
+    <span class="opt-label">太さ</span>
+    <input type="range" id="lineWidth" min="1" max="20" value="4">
+    <span id="lineWidthVal" style="font-size:12px;min-width:26px;">4</span>
+  </div>
+  <div class="opt-group hidden" id="optText">
+    <select id="fontFamily" title="フォント">
+      <option value='"Meiryo", sans-serif'>メイリオ</option>
+      <option value='"Yu Gothic", "YuGothic", sans-serif'>游ゴシック</option>
+      <option value='"Yu Mincho", "YuMincho", serif'>游明朝</option>
+      <option value='"MS Gothic", monospace'>ＭＳ ゴシック</option>
+      <option value='"MS Mincho", serif'>ＭＳ 明朝</option>
+      <option value='Arial, sans-serif'>Arial</option>
+      <option value='"Times New Roman", serif'>Times New Roman</option>
+      <option value='"Courier New", monospace'>Courier New</option>
+    </select>
+    <input type="number" id="fontSize" min="8" max="200" value="28" title="文字サイズ(px)">
+    <label class="chk"><input type="checkbox" id="fontBold">太字</label>
+    <select id="fontOutline" title="文字のふち取り">
+      <option value="none">ふちなし</option>
+      <option value="white">白ふち</option>
+      <option value="black">黒ふち</option>
+    </select>
+  </div>
+  <div class="opt-group">
+    <input type="color" id="color" value="#ff0000" title="色">
+  </div>
+  <div class="opt-group">
+    <button class="hbtn" id="btnClear" style="font-size:12px;">全消去</button>
+  </div>
+</div>
+
+<nav id="toolbar">
+  <button class="tool active" data-tool="arrow"><span class="ic">➜</span><span class="lb">矢印</span></button>
+  <button class="tool" data-tool="line"><span class="ic">／</span><span class="lb">直線</span></button>
+  <button class="tool" data-tool="rect"><span class="ic">▭</span><span class="lb">四角</span></button>
+  <button class="tool" data-tool="ellipse"><span class="ic">○</span><span class="lb">円</span></button>
+  <button class="tool" data-tool="text"><span class="ic">Ｔ</span><span class="lb">文字</span></button>
+  <button class="tool" data-tool="select"><span class="ic">✥</span><span class="lb">選択</span></button>
+</nav>
+
+<script>
+(function () {
+  "use strict";
+
+  var canvas = document.getElementById("canvas");
+  var ctx = canvas.getContext("2d");
+  var wrap = document.getElementById("canvasWrap");
+  var dropHint = document.getElementById("dropHint");
+  var textBox = document.getElementById("textBox");
+  var textGrip = document.getElementById("textGrip");
+  var textInput = document.getElementById("textInput");
+  var fileInput = document.getElementById("fileInput");
+
+  var img = null;
+  var annotations = [];
+  var undoStack = [];
+  var redoStack = [];
+  var tool = "arrow";
+  var selectedIndex = -1;
+  var drag = null;
+  var editingIndex = -1;
+  var pendingText = null;
+  var boxDrag = null;
+  var lastTapTime = 0;   // ダブルタップ検出用
+  var lastTapHit = -2;
+
+  // ---------- 設定値の取得 ----------
+  function opts() {
+    return {
+      color: document.getElementById("color").value,
+      width: parseInt(document.getElementById("lineWidth").value, 10),
+      dash: document.getElementById("lineStyle").value === "dashed",
+      font: document.getElementById("fontFamily").value,
+      size: parseInt(document.getElementById("fontSize").value, 10) || 28,
+      bold: document.getElementById("fontBold").checked,
+      outline: document.getElementById("fontOutline").value
+    };
+  }
+
+  document.getElementById("lineWidth").addEventListener("input", function () {
+    document.getElementById("lineWidthVal").textContent = this.value;
+    applyStyleToSelection();
+  });
+  ["lineStyle", "color", "fontFamily", "fontSize", "fontBold", "fontOutline"].forEach(function (id) {
+    var el = document.getElementById(id);
+    var onChange = function () {
+      applyStyleToSelection();
+      updateTextInputStyle();
+    };
+    el.addEventListener("change", onChange);
+    el.addEventListener("input", onChange);
+  });
+
+  // スマホのカラーピッカーは閉じてもイベントが発火しないことがあるため、
+  // 選択中の注釈と色設定のズレを監視して確実に反映する
+  setInterval(function () {
+    if (textBox.style.display === "block") { updateTextInputStyle(); return; } // 文字入力中はプレビューを更新
+    if (selectedIndex < 0 || !annotations[selectedIndex]) return;
+    if (editingIndex >= 0) return;
+    if (annotations[selectedIndex].color !== document.getElementById("color").value) {
+      applyStyleToSelection();
+    }
+  }, 300);
+
+  function applyStyleToSelection() {
+    if (editingIndex >= 0 || textBox.style.display === "block") return;
+    if (selectedIndex < 0) return;
+    var a = annotations[selectedIndex];
+    var o = opts();
+    pushHistory();
+    a.color = o.color;
+    if (a.type === "text") {
+      a.size = o.size; a.font = o.font; a.bold = o.bold; a.outline = o.outline;
+    } else {
+      a.width = o.width; a.dash = o.dash;
+    }
+    render();
+  }
+
+  // ---------- 画像の読み込み ----------
+  function loadFile(file) {
+    if (!file || !file.type.match(/^image\//)) return;
+    var url = URL.createObjectURL(file);
+    var im = new Image();
+    im.onload = function () {
+      img = im;
+      canvas.width = im.naturalWidth;
+      canvas.height = im.naturalHeight;
+      annotations = [];
+      undoStack = [];
+      redoStack = [];
+      selectedIndex = -1;
+      dropHint.style.display = "none";
+      wrap.style.display = "block";
+      setSmartDefaults(); // 画像の解像度に合わせて線・文字の初期値を調整
+      render();
+      URL.revokeObjectURL(url);
+    };
+    im.src = url;
+  }
+
+  // 高解像度写真でも線・文字がちゃんと見えるように、
+  // 画像サイズに比例した初期値とスライダー上限を設定する
+  function setSmartDefaults() {
+    var base = Math.max(canvas.width, canvas.height);
+    var lw = document.getElementById("lineWidth");
+    var defW = Math.max(4, Math.round(base / 130));
+    lw.max = Math.max(30, Math.round(base / 35));
+    lw.value = defW;
+    document.getElementById("lineWidthVal").textContent = defW;
+    var fs = document.getElementById("fontSize");
+    fs.max = Math.max(300, Math.round(base / 3));
+    fs.value = Math.max(28, Math.round(base / 18));
+  }
+
+  document.getElementById("btnOpen").onclick = function () { fileInput.click(); };
+  document.getElementById("btnOpen2").onclick = function () { fileInput.click(); };
+  fileInput.onchange = function () { loadFile(this.files[0]); this.value = ""; };
+
+  // 長押しメニューを抑止
+  canvas.addEventListener("contextmenu", function (e) { e.preventDefault(); });
+
+  // ---------- 座標変換 ----------
+  function toImageXY(e) {
+    var r = canvas.getBoundingClientRect();
+    return {
+      x: (e.clientX - r.left) * (canvas.width / r.width),
+      y: (e.clientY - r.top) * (canvas.height / r.height)
+    };
+  }
+  function scaleFactor() {
+    var r = canvas.getBoundingClientRect();
+    return r.width / canvas.width;
+  }
+
+  // ---------- 描画 ----------
+  function fontString(a) {
+    return (a.bold ? "bold " : "") + a.size + "px " + a.font;
+  }
+
+  function drawAnnotation(c, a) {
+    c.save();
+    c.strokeStyle = a.color;
+    c.fillStyle = a.color;
+    c.lineCap = "round";
+    if (a.type === "line" || a.type === "arrow") {
+      c.lineWidth = a.width;
+      if (a.dash) c.setLineDash([a.width * 3, a.width * 2.2]);
+      var ex = a.x2, ey = a.y2;
+      var ang = 0, len = 0, hw = 0;
+      if (a.type === "arrow") {
+        // 軸線は矢じりの根元で止める（太い線が先端からはみ出さないように）
+        ang = Math.atan2(a.y2 - a.y1, a.x2 - a.x1);
+        len = Math.max(14, a.width * 3.5);
+        hw = Math.max(10, a.width * 2.4);
+        ex = a.x2 - len * 0.85 * Math.cos(ang);
+        ey = a.y2 - len * 0.85 * Math.sin(ang);
+      }
+      if (a.type === "line" || Math.hypot(a.x2 - a.x1, a.y2 - a.y1) > len * 0.85) {
+        c.beginPath();
+        c.moveTo(a.x1, a.y1);
+        c.lineTo(ex, ey);
+        c.stroke();
+      }
+      if (a.type === "arrow") {
+        c.setLineDash([]);
+        c.beginPath();
+        c.moveTo(a.x2, a.y2);
+        c.lineTo(a.x2 - len * Math.cos(ang) + hw * Math.sin(ang) / 1.6,
+                 a.y2 - len * Math.sin(ang) - hw * Math.cos(ang) / 1.6);
+        c.lineTo(a.x2 - len * Math.cos(ang) - hw * Math.sin(ang) / 1.6,
+                 a.y2 - len * Math.sin(ang) + hw * Math.cos(ang) / 1.6);
+        c.closePath();
+        c.fill();
+      }
+    } else if (a.type === "rect" || a.type === "ellipse") {
+      c.lineWidth = a.width;
+      if (a.dash) c.setLineDash([a.width * 3, a.width * 2.2]);
+      var bx = Math.min(a.x1, a.x2), by = Math.min(a.y1, a.y2);
+      var bw = Math.abs(a.x2 - a.x1), bh = Math.abs(a.y2 - a.y1);
+      c.beginPath();
+      if (a.type === "rect") c.rect(bx, by, bw, bh);
+      else c.ellipse(bx + bw / 2, by + bh / 2, bw / 2, bh / 2, 0, 0, Math.PI * 2);
+      c.stroke();
+    } else if (a.type === "text") {
+      c.font = fontString(a);
+      c.textBaseline = "top";
+      if (a.outline && a.outline !== "none") {
+        // 白ふち/黒ふち（縁取りを描いてから本体を重ねる）
+        c.strokeStyle = a.outline === "white" ? "#ffffff" : "#000000";
+        c.lineWidth = Math.max(2, a.size / 12);
+        c.lineJoin = "round";
+        c.strokeText(a.text, a.x, a.y);
+      }
+      c.fillText(a.text, a.x, a.y);
+    }
+    c.restore();
+  }
+
+  function textBounds(a) {
+    ctx.save();
+    ctx.font = fontString(a);
+    var m = ctx.measureText(a.text);
+    ctx.restore();
+    return { x: a.x, y: a.y, w: m.width, h: a.size * 1.25 };
+  }
+
+  function render(previewA) {
+    updateOptionsVisibility(); // 選択状態に応じて設定バーを更新
+    if (!img) return;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(img, 0, 0);
+    annotations.forEach(function (a) { if (!a._hidden) drawAnnotation(ctx, a); });
+    if (previewA) drawAnnotation(ctx, previewA);
+
+    if (selectedIndex >= 0 && annotations[selectedIndex]) {
+      var a = annotations[selectedIndex];
+      ctx.save();
+      ctx.strokeStyle = "#2563eb";
+      ctx.fillStyle = "#ffffff";
+      ctx.lineWidth = Math.max(1.5, 1.5 / scaleFactor());
+      ctx.setLineDash([6, 4]);
+      if (a.type === "text") {
+        var b = textBounds(a);
+        ctx.strokeRect(b.x - 4, b.y - 4, b.w + 8, b.h + 8);
+      } else {
+        if (a.type === "rect" || a.type === "ellipse") {
+          ctx.strokeRect(Math.min(a.x1, a.x2) - 4, Math.min(a.y1, a.y2) - 4,
+                         Math.abs(a.x2 - a.x1) + 8, Math.abs(a.y2 - a.y1) + 8);
+        } else {
+          ctx.beginPath(); ctx.moveTo(a.x1, a.y1); ctx.lineTo(a.x2, a.y2); ctx.stroke();
+        }
+        ctx.setLineDash([]);
+        if (tool === "select") { // 端点ハンドルは掴める（選択ツールの）ときだけ表示
+          // 指で掴みやすいよう大きめのハンドル
+          var hr = Math.max(9, 9 / scaleFactor());
+          [[a.x1, a.y1], [a.x2, a.y2]].forEach(function (p) {
+            ctx.beginPath();
+            ctx.arc(p[0], p[1], hr, 0, Math.PI * 2);
+            ctx.fill(); ctx.stroke();
+          });
+        }
+      }
+      ctx.restore();
+    }
+  }
+
+  // ---------- 履歴 ----------
+  function pushHistory() {
+    undoStack.push(JSON.stringify(annotations));
+    if (undoStack.length > 100) undoStack.shift();
+    redoStack = [];
+  }
+  function lazyPush(drag) {
+    // 実際に動かしたときだけ履歴に積む（タップだけではUndo枠を消費しない）
+    if (!drag.pushed) {
+      undoStack.push(drag.before);
+      if (undoStack.length > 100) undoStack.shift();
+      redoStack = [];
+      drag.pushed = true;
+    }
+  }
+  function undo() {
+    if (!undoStack.length) return;
+    redoStack.push(JSON.stringify(annotations));
+    annotations = JSON.parse(undoStack.pop());
+    selectedIndex = -1;
+    render();
+  }
+  function redo() {
+    if (!redoStack.length) return;
+    undoStack.push(JSON.stringify(annotations));
+    annotations = JSON.parse(redoStack.pop());
+    selectedIndex = -1;
+    render();
+  }
+
+  // ---------- ヒットテスト ----------
+  function distToSegment(px, py, x1, y1, x2, y2) {
+    var dx = x2 - x1, dy = y2 - y1;
+    var lenSq = dx * dx + dy * dy;
+    var t = lenSq ? ((px - x1) * dx + (py - y1) * dy) / lenSq : 0;
+    t = Math.max(0, Math.min(1, t));
+    var cx = x1 + t * dx, cy = y1 + t * dy;
+    return Math.hypot(px - cx, py - cy);
+  }
+
+  function hitTest(p) {
+    // 指での操作を考慮して判定を広めに
+    var tol = Math.max(14, 14 / scaleFactor());
+    for (var i = annotations.length - 1; i >= 0; i--) {
+      var a = annotations[i];
+      if (a.type === "text") {
+        var b = textBounds(a);
+        if (p.x >= b.x - tol && p.x <= b.x + b.w + tol && p.y >= b.y - tol && p.y <= b.y + b.h + tol) return i;
+      } else if (a.type === "rect" || a.type === "ellipse") {
+        var t2 = Math.max(tol, a.width / 2 + 4);
+        var bx = Math.min(a.x1, a.x2), by = Math.min(a.y1, a.y2);
+        var bw = Math.abs(a.x2 - a.x1), bh = Math.abs(a.y2 - a.y1);
+        if (a.type === "rect") {
+          if (distToSegment(p.x, p.y, bx, by, bx + bw, by) <= t2 ||
+              distToSegment(p.x, p.y, bx + bw, by, bx + bw, by + bh) <= t2 ||
+              distToSegment(p.x, p.y, bx + bw, by + bh, bx, by + bh) <= t2 ||
+              distToSegment(p.x, p.y, bx, by + bh, bx, by) <= t2) return i;
+        } else {
+          var rx = Math.max(bw / 2, 1), ry = Math.max(bh / 2, 1);
+          var nd = Math.hypot((p.x - (bx + rx)) / rx, (p.y - (by + ry)) / ry);
+          if (Math.abs(nd - 1) * Math.min(rx, ry) <= t2) return i;
+        }
+      } else {
+        if (distToSegment(p.x, p.y, a.x1, a.y1, a.x2, a.y2) <= Math.max(tol, a.width / 2 + 4)) return i;
+      }
+    }
+    return -1;
+  }
+
+  function hitEndpoint(a, p) {
+    var tol = Math.max(18, 18 / scaleFactor());
+    if (Math.hypot(p.x - a.x1, p.y - a.y1) <= tol) return 1;
+    if (Math.hypot(p.x - a.x2, p.y - a.y2) <= tol) return 2;
+    return 0;
+  }
+
+  // ---------- タッチ／マウス操作 ----------
+  canvas.addEventListener("pointerdown", function (e) {
+    if (!img) return;
+    if (e.pointerType === "mouse" && e.button !== 0) return;
+    commitTextInput();
+    var p = toImageXY(e);
+    canvas.setPointerCapture(e.pointerId);
+
+    if (tool === "line" || tool === "arrow" || tool === "rect" || tool === "ellipse") {
+      var o = opts();
+      drag = { mode: "draw", a: { type: tool, x1: p.x, y1: p.y, x2: p.x, y2: p.y, color: o.color, width: o.width, dash: o.dash } };
+    } else if (tool === "text") {
+      openTextInput(p, -1);
+    } else if (tool === "select") {
+      // 端点ハンドル優先
+      if (selectedIndex >= 0 && annotations[selectedIndex] && annotations[selectedIndex].type !== "text") {
+        var ep = hitEndpoint(annotations[selectedIndex], p);
+        if (ep) {
+          drag = { mode: "endpoint", idx: selectedIndex, end: ep, before: JSON.stringify(annotations) };
+          return;
+        }
+      }
+      var hit = hitTest(p);
+
+      // ダブルタップでテキスト編集（マウスのdblclickの代わり）
+      var now = Date.now();
+      if (hit >= 0 && hit === lastTapHit && (now - lastTapTime) < 400 && annotations[hit].type === "text") {
+        lastTapTime = 0;
+        selectedIndex = hit;
+        drag = null;
+        openTextInput({ x: annotations[hit].x, y: annotations[hit].y }, hit);
+        return;
+      }
+      lastTapHit = hit;
+      lastTapTime = now;
+
+      selectedIndex = hit;
+      if (hit >= 0) {
+        drag = { mode: "move", idx: hit, last: p, before: JSON.stringify(annotations) };
+      }
+      render();
+    }
+  });
+
+  canvas.addEventListener("pointermove", function (e) {
+    if (!img || !drag) return;
+    var p = toImageXY(e);
+    if (drag.mode === "draw") {
+      drag.a.x2 = p.x; drag.a.y2 = p.y;
+      if (e.shiftKey) { // 外付けキーボード用
+        var dx = p.x - drag.a.x1, dy = p.y - drag.a.y1;
+        if (drag.a.type === "rect" || drag.a.type === "ellipse") {
+          var m = Math.max(Math.abs(dx), Math.abs(dy));
+          drag.a.x2 = drag.a.x1 + (dx < 0 ? -m : m);
+          drag.a.y2 = drag.a.y1 + (dy < 0 ? -m : m);
+        } else {
+          var ang = Math.round(Math.atan2(dy, dx) / (Math.PI / 4)) * (Math.PI / 4);
+          var len = Math.hypot(dx, dy);
+          drag.a.x2 = drag.a.x1 + len * Math.cos(ang);
+          drag.a.y2 = drag.a.y1 + len * Math.sin(ang);
+        }
+      }
+      render(drag.a);
+    } else if (drag.mode === "move") {
+      lazyPush(drag);
+      var a = annotations[drag.idx];
+      var dx2 = p.x - drag.last.x, dy2 = p.y - drag.last.y;
+      if (a.type === "text") { a.x += dx2; a.y += dy2; }
+      else { a.x1 += dx2; a.y1 += dy2; a.x2 += dx2; a.y2 += dy2; }
+      drag.last = p;
+      render();
+    } else if (drag.mode === "endpoint") {
+      lazyPush(drag);
+      var a2 = annotations[drag.idx];
+      if (drag.end === 1) { a2.x1 = p.x; a2.y1 = p.y; } else { a2.x2 = p.x; a2.y2 = p.y; }
+      render();
+    }
+  });
+
+  function endDrag() {
+    if (!drag) return;
+    if (drag.mode === "draw") {
+      var a = drag.a;
+      if (Math.hypot(a.x2 - a.x1, a.y2 - a.y1) > 3) {
+        pushHistory();
+        annotations.push(a);
+        selectedIndex = annotations.length - 1; // 描いた直後は選択状態にする
+      }
+    }
+    drag = null;
+    render();
+  }
+  canvas.addEventListener("pointerup", endDrag);
+  canvas.addEventListener("pointercancel", endDrag);
+
+  // マウス用ダブルクリック編集も残す
+  canvas.addEventListener("dblclick", function (e) {
+    if (!img) return;
+    var p = toImageXY(e);
+    var hit = hitTest(p);
+    if (hit >= 0 && annotations[hit].type === "text") {
+      selectedIndex = hit;
+      openTextInput({ x: annotations[hit].x, y: annotations[hit].y }, hit);
+    }
+  });
+
+  // ---------- テキスト入力（確定前は移動・スタイル変更が自由） ----------
+  function openTextInput(p, idx) {
+    editingIndex = idx;
+    var a = idx >= 0 ? annotations[idx] : null;
+    // pendingText は「文字の左端・上下中央」のアンカー位置として扱う
+    pendingText = a ? { x: a.x, y: a.y + a.size / 2 } : { x: p.x, y: p.y };
+    if (a) {
+      document.getElementById("color").value = a.color;
+      document.getElementById("fontSize").value = a.size;
+      document.getElementById("fontFamily").value = a.font;
+      document.getElementById("fontBold").checked = !!a.bold;
+      document.getElementById("fontOutline").value = a.outline || "none";
+      a._hidden = true;
+      render();
+    }
+    textBox.style.display = "block";
+    positionTextBox();
+    updateTextInputStyle();
+    textInput.value = a ? a.text : "";
+    setTimeout(function () { textInput.focus(); }, 0);
+    // ソフトキーボードが出たあと、入力ボックスが見える位置までスクロール
+    setTimeout(function () {
+      if (textBox.style.display === "block") {
+        textInput.scrollIntoView({ block: "center", behavior: "smooth" });
+      }
+    }, 400);
+  }
+
+  function positionTextBox() {
+    if (!pendingText) return;
+    var s = scaleFactor();
+    var o = opts();
+    textBox.style.left = (pendingText.x * s) + "px";
+    // アンカー（タップ位置）が文字の上下中央に来るよう配置
+    textBox.style.top = ((pendingText.y - o.size / 2) * s) + "px";
+  }
+
+  function updateTextInputStyle() {
+    if (textBox.style.display !== "block") return;
+    var s = scaleFactor();
+    var o = opts();
+    textInput.style.font = (o.bold ? "bold " : "") + (o.size * s) + "px " + o.font;
+    textInput.style.color = o.color;
+    if (o.outline !== "none") {
+      // ふち取りのプレビュー（8方向のtext-shadowで擬似縁取り）
+      var oc = o.outline === "white" ? "#ffffff" : "#000000";
+      var d = Math.max(1, (o.size / 24) * s);
+      var sh = [];
+      [[-d, 0], [d, 0], [0, -d], [0, d], [-d, -d], [d, -d], [-d, d], [d, d]].forEach(function (v) {
+        sh.push(v[0] + "px " + v[1] + "px 0 " + oc);
+      });
+      textInput.style.textShadow = sh.join(",");
+    } else {
+      textInput.style.textShadow = "none";
+    }
+    positionTextBox(); // サイズ変更時も上下中央位置を維持
+  }
+
+  function commitTextInput() {
+    if (textBox.style.display !== "block") return;
+    if (boxDrag) return;
+    var v = textInput.value.trim();
+    textBox.style.display = "none";
+    var o = opts();
+    if (editingIndex >= 0 && annotations[editingIndex]) {
+      var a = annotations[editingIndex];
+      delete a._hidden;
+      pushHistory();
+      if (v) {
+        a.text = v;
+        a.x = pendingText.x;
+        a.y = pendingText.y - o.size / 2; // アンカー(左・上下中央)から左上座標へ変換
+        a.color = o.color; a.size = o.size; a.font = o.font; a.bold = o.bold; a.outline = o.outline;
+        selectedIndex = editingIndex; // 確定直後は選択状態にする
+      } else {
+        annotations.splice(editingIndex, 1);
+        selectedIndex = -1;
+      }
+    } else if (v && pendingText) {
+      pushHistory();
+      annotations.push({ type: "text", x: pendingText.x, y: pendingText.y - o.size / 2, text: v,
+                         color: o.color, size: o.size, font: o.font, bold: o.bold, outline: o.outline });
+      selectedIndex = annotations.length - 1; // 確定直後は選択状態にする
+    }
+    editingIndex = -1;
+    pendingText = null;
+    render();
+  }
+
+  function cancelTextInput() {
+    if (editingIndex >= 0 && annotations[editingIndex]) delete annotations[editingIndex]._hidden;
+    textInput.value = "";
+    textBox.style.display = "none";
+    editingIndex = -1;
+    pendingText = null;
+    render();
+  }
+
+  textInput.addEventListener("keydown", function (e) {
+    if (e.key === "Enter") { e.preventDefault(); commitTextInput(); textInput.blur(); }
+    if (e.key === "Escape") { cancelTextInput(); }
+    e.stopPropagation();
+  });
+  var headerEl = document.querySelector("header");
+  var optionsEl = document.getElementById("optionsBar");
+  textInput.addEventListener("blur", function () {
+    setTimeout(function () {
+      if (boxDrag) return;
+      var ae = document.activeElement;
+      // ツールバー・設定バー操作中は確定しない（スタイル変更を続けられる）
+      if (ae && (headerEl.contains(ae) || optionsEl.contains(ae) || textBox.contains(ae))) return;
+      commitTextInput();
+    }, 0);
+  });
+
+  textGrip.addEventListener("pointerdown", function (e) {
+    e.preventDefault();
+    e.stopPropagation();
+    boxDrag = {
+      startX: e.clientX, startY: e.clientY,
+      origX: pendingText.x, origY: pendingText.y
+    };
+    textGrip.setPointerCapture(e.pointerId);
+  });
+  textGrip.addEventListener("pointermove", function (e) {
+    if (!boxDrag) return;
+    var s = scaleFactor();
+    pendingText.x = boxDrag.origX + (e.clientX - boxDrag.startX) / s;
+    pendingText.y = boxDrag.origY + (e.clientY - boxDrag.startY) / s;
+    positionTextBox();
+  });
+  textGrip.addEventListener("pointerup", function (e) {
+    boxDrag = null;
+    textGrip.releasePointerCapture(e.pointerId);
+    textInput.focus();
+  });
+
+  // ---------- ツール切り替え＆設定バーの出し分け ----------
+  function updateOptionsVisibility() {
+    var optLine = document.getElementById("optLine");
+    var optText = document.getElementById("optText");
+    var showText;
+    if (tool === "text") {
+      showText = true;
+    } else if (tool === "select") {
+      // 選択中のものに合わせて出し分け（文字を選んだときだけフォント設定を表示）
+      showText = selectedIndex >= 0 && annotations[selectedIndex] &&
+                 annotations[selectedIndex].type === "text";
+    } else {
+      showText = false;
+    }
+    optText.classList.toggle("hidden", !showText);
+    optLine.classList.toggle("hidden", showText);
+  }
+
+  document.querySelectorAll("#toolbar button.tool").forEach(function (b) {
+    b.addEventListener("click", function () {
+      document.querySelectorAll("#toolbar button.tool").forEach(function (x) { x.classList.remove("active"); });
+      b.classList.add("active");
+      tool = b.dataset.tool;
+      if (tool !== "select") { selectedIndex = -1; render(); }
+      updateOptionsVisibility();
+    });
+  });
+  updateOptionsVisibility();
+
+  // ---------- 削除・全消去・Undo/Redo ----------
+  function deleteSelected() {
+    if (selectedIndex < 0) return;
+    pushHistory();
+    annotations.splice(selectedIndex, 1);
+    selectedIndex = -1;
+    render();
+  }
+  document.getElementById("btnDelete").onclick = deleteSelected;
+  document.getElementById("btnUndo").onclick = undo;
+  document.getElementById("btnRedo").onclick = redo;
+  document.getElementById("btnClear").onclick = function () {
+    if (!annotations.length) return;
+    if (confirm("注釈をすべて消去します。よろしいですか？（画像は残ります）")) {
+      pushHistory();
+      annotations = [];
+      selectedIndex = -1;
+      render();
+    }
+  };
+
+  // 外付けキーボード用ショートカット
+  document.addEventListener("keydown", function (e) {
+    if (e.target === textInput) return;
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "z") { e.preventDefault(); e.shiftKey ? redo() : undo(); }
+    else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "y") { e.preventDefault(); redo(); }
+    else if (e.key === "Delete" || e.key === "Backspace") {
+      if (selectedIndex >= 0) { e.preventDefault(); deleteSelected(); }
+    }
+  });
+
+  // ---------- 保存 ----------
+  function save(type) {
+    if (!img) { alert("先に画像を開いてください。"); return; }
+    var off = document.createElement("canvas");
+    off.width = canvas.width;
+    off.height = canvas.height;
+    var c = off.getContext("2d");
+    if (type === "image/jpeg") { c.fillStyle = "#ffffff"; c.fillRect(0, 0, off.width, off.height); }
+    c.drawImage(img, 0, 0);
+    annotations.forEach(function (a) { drawAnnotation(c, a); });
+    off.toBlob(function (blob) {
+      var d = new Date();
+      var pad = function (n) { return String(n).padStart(2, "0"); };
+      var name = "annotated_" + d.getFullYear() + pad(d.getMonth() + 1) + pad(d.getDate()) +
+                 "_" + pad(d.getHours()) + pad(d.getMinutes()) + pad(d.getSeconds()) +
+                 (type === "image/jpeg" ? ".jpg" : ".png");
+      var file = new File([blob], name, { type: type });
+      // スマホでは共有シート（写真に保存など）を優先、非対応ならダウンロード
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        navigator.share({ files: [file] }).catch(function () { downloadBlob(blob, name); });
+      } else {
+        downloadBlob(blob, name);
+      }
+    }, type, 0.92);
+  }
+  function downloadBlob(blob, name) {
+    var aEl = document.createElement("a");
+    aEl.href = URL.createObjectURL(blob);
+    aEl.download = name;
+    aEl.click();
+    setTimeout(function () { URL.revokeObjectURL(aEl.href); }, 5000);
+  }
+  document.getElementById("btnSaveJpg").onclick = function () { save("image/jpeg"); };
+  document.getElementById("btnSavePng").onclick = function () { save("image/png"); };
+
+  // ---------- 50%縮小（画像と注釈を確定して半分のサイズにする） ----------
+  function shrinkHalf() {
+    if (!img) { alert("先に画像を開いてください。"); return; }
+    commitTextInput();
+    var newW = Math.max(1, Math.round(canvas.width / 2));
+    var newH = Math.max(1, Math.round(canvas.height / 2));
+    var full = document.createElement("canvas");
+    full.width = canvas.width; full.height = canvas.height;
+    var fc = full.getContext("2d");
+    fc.drawImage(img, 0, 0);
+    annotations.forEach(function (a) { drawAnnotation(fc, a); });
+    var scaled = document.createElement("canvas");
+    scaled.width = newW; scaled.height = newH;
+    var sc = scaled.getContext("2d");
+    sc.imageSmoothingEnabled = true;
+    sc.imageSmoothingQuality = "high";
+    sc.drawImage(full, 0, 0, newW, newH);
+    var newImg = new Image();
+    newImg.onload = function () {
+      img = newImg;
+      canvas.width = newW; canvas.height = newH;
+      annotations = [];
+      undoStack = []; redoStack = [];
+      selectedIndex = -1;
+      render();
+    };
+    newImg.src = scaled.toDataURL("image/png");
+  }
+  document.getElementById("btnShrink").onclick = shrinkHalf;
+
+  // 画面回転・リサイズ対応
+  window.addEventListener("resize", function () {
+    render();
+    positionTextBox();
+    updateTextInputStyle();
+  });
+
+  // ソフトキーボードで入力ボックスが隠れないようにする
+  // （キーボードの高さぶんキャンバス下に余白を作り、入力位置へスクロール）
+  var stageEl = document.getElementById("stage");
+  if (window.visualViewport) {
+    window.visualViewport.addEventListener("resize", function () {
+      var kb = window.innerHeight - window.visualViewport.height;
+      stageEl.style.paddingBottom = (kb > 80 ? kb + 20 : 10) + "px";
+      if (kb > 80 && textBox.style.display === "block") {
+        setTimeout(function () {
+          textInput.scrollIntoView({ block: "center" });
+        }, 50);
+      }
+    });
+  }
+})();
+</script>
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function () {
+    navigator.serviceWorker.register('./service-worker.js').catch(function (e) { console.error('SW登録失敗', e); });
+  });
+}
+</script>
+</body>
+</html>
